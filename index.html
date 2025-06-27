@@ -36,31 +36,27 @@
     });
 
     const map = L.map('map', {
-      center: [28.48, -16.32], // Tenerife, centrado un poco más en La Laguna
-      zoom: 10,
       layers: [baseLayer]
     });
 
-    // URLs reales
     const MUNICIPIOS_URL = 'https://raw.githubusercontent.com/geocyl/VisorTenerife/refs/heads/main/Municipios.geojson';
     const PUNTOS_URL = 'https://raw.githubusercontent.com/geocyl/VisorTenerife/refs/heads/main/Puntos_Laguna_Shape2.geojson';
 
-    // Municipios
+    // 1. Cargar Municipios (primero)
     fetch(MUNICIPIOS_URL)
       .then(res => res.json())
       .then(data => {
-        const municipiosLayer = L.geoJSON(data, {
+        L.geoJSON(data, {
           style: {
-            color: 'blue',
-            weight: 2,
+            color: '#000000',    // Negro
+            weight: 3,           // Más grueso
             fillOpacity: 0
           }
         }).addTo(map);
-        map.fitBounds(municipiosLayer.getBounds());
       })
       .catch(err => alert('Error al cargar Municipios.geojson:\n' + err));
 
-    // Puntos
+    // 2. Cargar Puntos (después para que estén encima y centrar mapa)
     fetch(PUNTOS_URL)
       .then(res => res.json())
       .then(data => {
@@ -83,6 +79,9 @@
             layer.bindPopup(popup);
           }
         }).addTo(map);
+
+        // Ajustar vista al conjunto de puntos
+        map.fitBounds(puntosLayer.getBounds());
       })
       .catch(err => alert('Error al cargar los puntos:\n' + err));
   </script>
