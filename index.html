@@ -42,29 +42,42 @@
     const MUNICIPIOS_URL = 'https://raw.githubusercontent.com/geocyl/VisorTenerife/refs/heads/main/Municipios.geojson';
     const PUNTOS_URL = 'https://raw.githubusercontent.com/geocyl/VisorTenerife/refs/heads/main/Puntos_Laguna_Shape2.geojson';
 
-    // 1. Cargar Municipios (primero)
+    // Función para obtener el color según "Servicios"
+    function getColorByServicio(servicio) {
+      switch (servicio) {
+        case 'Desarrollo rural':
+          return '#800080'; // morado
+        case 'Parques y jardines':
+          return '#228B22'; // verde
+        default:
+          return '#999999'; // gris por defecto
+      }
+    }
+
+    // 1. Cargar municipios
     fetch(MUNICIPIOS_URL)
       .then(res => res.json())
       .then(data => {
         L.geoJSON(data, {
           style: {
-            color: '#000000',    // Negro
-            weight: 3,           // Más grueso
+            color: '#000000',
+            weight: 3,
             fillOpacity: 0
           }
         }).addTo(map);
-      })
-      .catch(err => alert('Error al cargar Municipios.geojson:\n' + err));
+      });
 
-    // 2. Cargar Puntos (después para que estén encima y centrar mapa)
+    // 2. Cargar puntos con simbología según "Servicios"
     fetch(PUNTOS_URL)
       .then(res => res.json())
       .then(data => {
         const puntosLayer = L.geoJSON(data, {
           pointToLayer: (feature, latlng) => {
+            const servicio = feature.properties.Servicios;
+            const color = getColorByServicio(servicio);
             return L.circleMarker(latlng, {
               radius: 6,
-              fillColor: 'red',
+              fillColor: color,
               color: '#fff',
               weight: 1,
               opacity: 1,
@@ -80,10 +93,10 @@
           }
         }).addTo(map);
 
-        // Ajustar vista al conjunto de puntos
+        // Centrar el mapa en los puntos
         map.fitBounds(puntosLayer.getBounds());
-      })
-      .catch(err => alert('Error al cargar los puntos:\n' + err));
+      });
   </script>
 </body>
 </html>
+
