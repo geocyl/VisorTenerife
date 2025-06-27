@@ -22,38 +22,59 @@
       z-index: 1200;
       text-align: center;
     }
+    .legend {
+      position: absolute;
+      bottom: 20px;
+      left: 10px;
+      background: rgba(255,255,255,0.9);
+      padding: 10px;
+      border-radius: 6px;
+      font-family: Arial, sans-serif;
+      font-size: 13px;
+      z-index: 1200;
+    }
+    .legend-item {
+      margin-bottom: 4px;
+    }
+    .legend-item input {
+      margin-right: 6px;
+    }
+    .legend-color {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
   </style>
 </head>
 <body>
   <div id="map"></div>
   <div id="mapTitle">Visor Cartográfico<br><span>Tenerife</span></div>
-  
+  <div class="legend" id="mapLegend"></div>
+
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script>
-    const baseLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    const map = L.map('map').setView([28.48, -16.32], 10);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '© OpenStreetMap contributors'
-    });
-
-    const map = L.map('map', {
-      layers: [baseLayer]
-    });
+    }).addTo(map);
 
     const MUNICIPIOS_URL = 'https://raw.githubusercontent.com/geocyl/VisorTenerife/refs/heads/main/Municipios.geojson';
     const PUNTOS_URL = 'https://raw.githubusercontent.com/geocyl/VisorTenerife/refs/heads/main/Puntos_Laguna_Shape2.geojson';
 
-    function getColorByServicio(servicio) {
-      switch (servicio) {
-        case 'Desarrollo Rural':
-          return '#800080';
-        case 'Parques y jardines':
-          return '#228B22';
-        default:
-          return '#999999';
-      }
-    }
+    // Colores por servicio
+    const servicioColores = {
+      "Desarrollo Rural": "#800080",
+      "Parques y jardines": "#228B22"
+    };
 
-    // Municipios
+    // Capas por servicio
+    const servicioLayers = {};
+
+    // Cargar municipios
     fetch(MUNICIPIOS_URL)
       .then(res => res.json())
       .then(data => {
@@ -66,40 +87,88 @@
         }).addTo(map);
       });
 
-    // Puntos
+    // Cargar puntos
     fetch(PUNTOS_URL)
       .then(res => res.json())
       .then(data => {
-        const puntosLayer = L.geoJSON(data, {
-          pointToLayer: (feature, latlng) => {
-            const color = getColorByServicio(feature.properties.Servicios);
-            return L.circleMarker(latlng, {
-              radius: 6,
-              fillColor: color,
-              color: '#fff',
-              weight: 1,
-              opacity: 1,
-              fillOpacity: 0.8
-            });
-          },
-          onEachFeature: (feature, layer) => {
-            const props = feature.properties;
-            const name = props.Name || "Sin nombre";
-            const info = props.PopupInfo;
+        const bounds = [];
 
-            let popupContent = `<b>${name}</b>`;
-            if (info && typeof info === 'string' && info.trim() !== "") {
-              popupContent += `<br>${info}`;
-            }
+        // Agrupar por servicio
+        Object.keys(servicioColores).forEach(serv => {
+          servicioLayers[serv] = L.layerGroup().addTo(map);
+        });
 
-            layer.bindPopup(popupContent);
+        data.features.forEach(feature => {
+          const props = feature.properties;
+          const coords = feature.geometry.coordinates;
+          const servicio = props.Servicios;
+          const color = servicioColores[servicio] || "#999999";
+
+          const marker = L.circleMarker([coords[1], coords[0]], {
+            radius: 6,
+            fillColor: color,
+            color: "#fff",
+            weight: 1,
+            opacity: 1,
+            fillOpacity: 0.8
+          });
+
+          const name = props.Name || "Sin nombre";
+          const info = props.PopupInfo;
+          let popupContent = `<b>${name}</b>`;
+          if (info && typeof info === 'string' && info.trim() !== "") {
+            popupContent += `<br>${info}`;
           }
-        }).addTo(map);
+          marker.bindPopup(popupContent);
 
-        map.fitBounds(puntosLayer.getBounds());
+          if (servicioLayers[servicio]) {
+            marker.addTo(servicioLayers[servicio]);
+            bounds.push([coords[1], coords[0]]);
+          }
+        });
+
+        // Ajustar vista
+        if (bounds.length > 0) {
+          map.fitBounds(bounds);
+        }
+
+        // Crear leyenda
+        const legend = document.getElementById("mapLegend");
+        legend.innerHTML = "<b>Capas temáticas</b><br>";
+
+        Object.entries(servicioLayers).forEach(([servicio, layer]) => {
+          const color = servicioColores[servicio];
+
+          const div = document.createElement("div");
+          div.className = "legend-item";
+
+          const checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.checked = true;
+          checkbox.onchange = () => {
+            if (checkbox.checked) {
+              map.addLayer(layer);
+            } else {
+              map.removeLayer(layer);
+            }
+          };
+
+          const colorBox = document.createElement("span");
+          colorBox.className = "legend-color";
+          colorBox.style.backgroundColor = color;
+
+          const label = document.createTextNode(servicio);
+
+          div.appendChild(checkbox);
+          div.appendChild(colorBox);
+          div.appendChild(label);
+
+          legend.appendChild(div);
+        });
       });
   </script>
 </body>
 </html>
+
 
 
