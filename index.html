@@ -85,16 +85,20 @@
               fillOpacity: 0.8
             });
           },
-          onEachFeature: (feature, layer) => {
-            const props = feature.properties;
-            const name = props.Name || "Sin nombre";
-            const info = props.PopupInfo;
-            let popupContent = `<b>${name}</b>`;
-            if (info && info.trim() !== "") {
-              popupContent += `<br>${info}`;
-            }
-            layer.bindPopup(popupContent);
-          }
+onEachFeature: (feature, layer) => {
+  const props = feature.properties;
+  console.log(props); // Para depuración
+
+  const name = props?.Name || "Sin nombre";
+  const info = props?.PopupInfo;
+
+  let popupContent = `<b>${name}</b>`;
+  if (info && info.trim() !== "") {
+    popupContent += `<br>${info}`;
+  }
+
+  layer.bindPopup(popupContent);
+}
         }).addTo(map);
 
         // Centrar el mapa según los puntos
