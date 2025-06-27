@@ -54,7 +54,7 @@
       }
     }
 
-    // 1. Cargar municipios
+    // Cargar municipios
     fetch(MUNICIPIOS_URL)
       .then(res => res.json())
       .then(data => {
@@ -65,9 +65,10 @@
             fillOpacity: 0
           }
         }).addTo(map);
-      });
+      })
+      .catch(err => console.error('Error al cargar municipios:', err));
 
-    // 2. Cargar puntos con simbología según "Servicios"
+    // Cargar puntos con simbología y popup personalizada
     fetch(PUNTOS_URL)
       .then(res => res.json())
       .then(data => {
@@ -85,17 +86,21 @@
             });
           },
           onEachFeature: (feature, layer) => {
-            let popup = '';
-            for (const key in feature.properties) {
-              popup += `<b>${key}</b>: ${feature.properties[key]}<br>`;
+            const props = feature.properties;
+            const name = props.Name || "Sin nombre";
+            const info = props.PopupInfo;
+            let popupContent = `<b>${name}</b>`;
+            if (info && info.trim() !== "") {
+              popupContent += `<br>${info}`;
             }
-            layer.bindPopup(popup);
+            layer.bindPopup(popupContent);
           }
         }).addTo(map);
 
-        // Centrar el mapa en los puntos
+        // Centrar el mapa según los puntos
         map.fitBounds(puntosLayer.getBounds());
-      });
+      })
+      .catch(err => console.error('Error al cargar puntos:', err));
   </script>
 </body>
 </html>
