@@ -85,13 +85,14 @@
     fetch(MUNICIPIOS_URL)
       .then(res => res.json())
       .then(data => {
-        municipiosLayer = L.geoJSON(data, {
-          style: {
-            color: '#000000',
-            weight: 2,
-            fillOpacity: 0
-          }
-        }).addTo(map);
+municipiosLayer = L.geoJSON(data, {
+  style: {
+    color: '#000000',
+    weight: 2,
+    fillOpacity: 0
+  },
+  interactive: false  // 👈 Esto desactiva la interacción
+}).addTo(map);
         buildLegend(); // Llamar para incluir esta capa en la leyenda
       });
 
