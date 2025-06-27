@@ -14,8 +14,8 @@
       transform: translateX(-50%);
       background: rgba(255, 255, 255, 0.85);
       padding: 6px 16px;
-      border-radius: 8px;
-      font-family: 'Arial', sans-serif;
+      border-radius: 6px;
+      font-family: Arial, sans-serif;
       font-size: 16px;
       font-weight: bold;
       box-shadow: 0 2px 6px rgba(0,0,0,0.2);
@@ -64,29 +64,25 @@
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script>
     const map = L.map('map').setView([28.48, -16.32], 10);
+    let initialBounds = null; // 🔁 Guardaremos los bounds iniciales aquí
 
-const baseLayers = {
-  "OpenStreetMap": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19,
-    attribution: '© OpenStreetMap contributors'
-  }),
+    const baseLayers = {
+      "OpenStreetMap": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '© OpenStreetMap contributors'
+      }),
+      "Satélite (Esri)": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 19,
+        attribution: 'Tiles © Esri'
+      }),
+      "Gris claro": L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        maxZoom: 19,
+        attribution: '© CartoDB'
+      })
+    };
 
-  "Satélite (Esri)": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-    maxZoom: 19,
-    attribution: 'Tiles © Esri'
-  }),
-
-  "Gris claro": L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-    maxZoom: 19,
-    attribution: '© CartoDB'
-  })
-};
-
-// Añadir una de ellas como capa inicial
-baseLayers["OpenStreetMap"].addTo(map);
-
-// Mostrar el selector de capas
-L.control.layers(baseLayers, null, { position: 'topright' }).addTo(map);
+    baseLayers["OpenStreetMap"].addTo(map);
+    L.control.layers(baseLayers, null, { position: 'topright' }).addTo(map);
 
     const MUNICIPIOS_URL = 'https://raw.githubusercontent.com/geocyl/VisorTenerife/refs/heads/main/Municipios.geojson';
     const PUNTOS_URL = 'https://raw.githubusercontent.com/geocyl/VisorTenerife/refs/heads/main/Puntos_Laguna_Shape2.geojson';
@@ -103,15 +99,15 @@ L.control.layers(baseLayers, null, { position: 'topright' }).addTo(map);
     fetch(MUNICIPIOS_URL)
       .then(res => res.json())
       .then(data => {
-municipiosLayer = L.geoJSON(data, {
-  style: {
-    color: '#000000',
-    weight: 2,
-    fillOpacity: 0
-  },
-  interactive: false  // 👈 Esto desactiva la interacción
-}).addTo(map);
-        buildLegend(); // Llamar para incluir esta capa en la leyenda
+        municipiosLayer = L.geoJSON(data, {
+          style: {
+            color: '#000000',
+            weight: 2,
+            fillOpacity: 0
+          },
+          interactive: false
+        }).addTo(map);
+        buildLegend();
       });
 
     // Cargar puntos
@@ -154,11 +150,38 @@ municipiosLayer = L.geoJSON(data, {
         });
 
         if (bounds.length > 0) {
-          map.fitBounds(bounds);
+          initialBounds = L.latLngBounds(bounds); // 👈 Guardamos los bounds iniciales
+          map.fitBounds(initialBounds);
         }
 
-        buildLegend(); // Llamar para mostrar puntos en la leyenda
+        buildLegend();
       });
+
+    // Botón de vista inicial
+    const HomeButton = L.Control.extend({
+      options: { position: 'topleft' },
+      onAdd: function () {
+        const btn = L.DomUtil.create('button', 'leaflet-bar leaflet-control leaflet-control-custom');
+        btn.innerHTML = '⌂';
+        btn.title = 'Vista inicial';
+        btn.style.width = '30px';
+        btn.style.height = '30px';
+        btn.style.lineHeight = '30px';
+        btn.style.textAlign = 'center';
+        btn.style.fontSize = '18px';
+        btn.style.backgroundColor = 'white';
+        btn.style.cursor = 'pointer';
+        btn.style.boxShadow = '0 1px 5px rgba(0,0,0,0.65)';
+        btn.onclick = function () {
+          if (initialBounds) {
+            map.fitBounds(initialBounds);
+          }
+        };
+        return btn;
+      }
+    });
+
+    map.addControl(new HomeButton());
 
     function buildLegend() {
       const legend = document.getElementById("mapLegend");
@@ -184,7 +207,6 @@ municipiosLayer = L.geoJSON(data, {
       };
 
       const labelMuni = document.createTextNode("Mostrar municipios");
-
       divMuni.appendChild(chkMuni);
       divMuni.appendChild(labelMuni);
       legend.appendChild(divMuni);
@@ -220,13 +242,13 @@ municipiosLayer = L.geoJSON(data, {
         div.appendChild(checkbox);
         div.appendChild(colorBox);
         div.appendChild(label);
-
         legend.appendChild(div);
       });
     }
   </script>
 </body>
 </html>
+
 
 
 
