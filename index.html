@@ -1,17 +1,90 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Visor La Laguna</title>
   <meta charset="utf-8" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <title>Visor Tenerife</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <style>
-    #map { height: 100vh; }
+    html, body, #map { margin: 0; padding: 0; height: 100%; width: 100%; }
+    #mapTitle {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255, 255, 255, 0.85);
+      padding: 6px 16px;
+      border-radius: 8px;
+      font-family: 'Arial', sans-serif;
+      font-size: 16px;
+      font-weight: bold;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      z-index: 1200;
+      text-align: center;
+    }
   </style>
 </head>
 <body>
   <div id="map"></div>
+  <div id="mapTitle">Visor Cartográfico<br><span>Tenerife</span></div>
+  
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    const baseLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '© OpenStreetMap contributors'
+    });
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="js/app.js"></script>
+    const map = L.map('map', {
+      center: [28.48, -16.32], // Tenerife, centrado un poco más en La Laguna
+      zoom: 10,
+      layers: [baseLayer]
+    });
+
+    // URLs reales
+    const MUNICIPIOS_URL = 'https://raw.githubusercontent.com/geocyl/VisorTenerife/refs/heads/main/Municipios.geojson';
+    const PUNTOS_URL = 'https://raw.githubusercontent.com/geocyl/VisorTenerife/refs/heads/main/Puntos_Laguna_Shape2.geojson';
+
+    // Municipios
+    fetch(MUNICIPIOS_URL)
+      .then(res => res.json())
+      .then(data => {
+        const municipiosLayer = L.geoJSON(data, {
+          style: {
+            color: 'blue',
+            weight: 2,
+            fillOpacity: 0
+          }
+        }).addTo(map);
+        map.fitBounds(municipiosLayer.getBounds());
+      })
+      .catch(err => alert('Error al cargar Municipios.geojson:\n' + err));
+
+    // Puntos
+    fetch(PUNTOS_URL)
+      .then(res => res.json())
+      .then(data => {
+        const puntosLayer = L.geoJSON(data, {
+          pointToLayer: (feature, latlng) => {
+            return L.circleMarker(latlng, {
+              radius: 6,
+              fillColor: 'red',
+              color: '#fff',
+              weight: 1,
+              opacity: 1,
+              fillOpacity: 0.8
+            });
+          },
+          onEachFeature: (feature, layer) => {
+            let popup = '';
+            for (const key in feature.properties) {
+              popup += `<b>${key}</b>: ${feature.properties[key]}<br>`;
+            }
+            layer.bindPopup(popup);
+          }
+        }).addTo(map);
+      })
+      .catch(err => alert('Error al cargar los puntos:\n' + err));
+  </script>
 </body>
 </html>
