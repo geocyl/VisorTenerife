@@ -26,12 +26,20 @@
       position: absolute;
       bottom: 20px;
       left: 10px;
-      background: rgba(255,255,255,0.9);
+      background: rgba(255,255,255,0.95);
       padding: 10px;
       border-radius: 6px;
       font-family: Arial, sans-serif;
       font-size: 13px;
       z-index: 1200;
+      max-width: 220px;
+    }
+    .legend h4 {
+      margin: 8px 0 4px;
+      font-size: 14px;
+      font-weight: bold;
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 2px;
     }
     .legend-item {
       margin-bottom: 4px;
@@ -65,26 +73,26 @@
     const MUNICIPIOS_URL = 'https://raw.githubusercontent.com/geocyl/VisorTenerife/refs/heads/main/Municipios.geojson';
     const PUNTOS_URL = 'https://raw.githubusercontent.com/geocyl/VisorTenerife/refs/heads/main/Puntos_Laguna_Shape2.geojson';
 
-    // Colores por servicio
     const servicioColores = {
       "Desarrollo Rural": "#800080",
       "Parques y jardines": "#228B22"
     };
 
-    // Capas por servicio
     const servicioLayers = {};
+    let municipiosLayer = null;
 
     // Cargar municipios
     fetch(MUNICIPIOS_URL)
       .then(res => res.json())
       .then(data => {
-        L.geoJSON(data, {
+        municipiosLayer = L.geoJSON(data, {
           style: {
             color: '#000000',
             weight: 2,
             fillOpacity: 0
           }
         }).addTo(map);
+        buildLegend(); // Llamar para incluir esta capa en la leyenda
       });
 
     // Cargar puntos
@@ -93,7 +101,6 @@
       .then(data => {
         const bounds = [];
 
-        // Agrupar por servicio
         Object.keys(servicioColores).forEach(serv => {
           servicioLayers[serv] = L.layerGroup().addTo(map);
         });
@@ -127,45 +134,77 @@
           }
         });
 
-        // Ajustar vista
         if (bounds.length > 0) {
           map.fitBounds(bounds);
         }
 
-        // Crear leyenda
-        const legend = document.getElementById("mapLegend");
-        legend.innerHTML = "<b>Capas temáticas</b><br>";
-
-        Object.entries(servicioLayers).forEach(([servicio, layer]) => {
-          const color = servicioColores[servicio];
-
-          const div = document.createElement("div");
-          div.className = "legend-item";
-
-          const checkbox = document.createElement("input");
-          checkbox.type = "checkbox";
-          checkbox.checked = true;
-          checkbox.onchange = () => {
-            if (checkbox.checked) {
-              map.addLayer(layer);
-            } else {
-              map.removeLayer(layer);
-            }
-          };
-
-          const colorBox = document.createElement("span");
-          colorBox.className = "legend-color";
-          colorBox.style.backgroundColor = color;
-
-          const label = document.createTextNode(servicio);
-
-          div.appendChild(checkbox);
-          div.appendChild(colorBox);
-          div.appendChild(label);
-
-          legend.appendChild(div);
-        });
+        buildLegend(); // Llamar para mostrar puntos en la leyenda
       });
+
+    function buildLegend() {
+      const legend = document.getElementById("mapLegend");
+      legend.innerHTML = "";
+
+      // Grupo 1: Municipios
+      const h1 = document.createElement("h4");
+      h1.textContent = "Municipios";
+      legend.appendChild(h1);
+
+      const divMuni = document.createElement("div");
+      divMuni.className = "legend-item";
+
+      const chkMuni = document.createElement("input");
+      chkMuni.type = "checkbox";
+      chkMuni.checked = true;
+      chkMuni.onchange = () => {
+        if (chkMuni.checked) {
+          map.addLayer(municipiosLayer);
+        } else {
+          map.removeLayer(municipiosLayer);
+        }
+      };
+
+      const labelMuni = document.createTextNode("Mostrar municipios");
+
+      divMuni.appendChild(chkMuni);
+      divMuni.appendChild(labelMuni);
+      legend.appendChild(divMuni);
+
+      // Grupo 2: Servicios
+      const h2 = document.createElement("h4");
+      h2.textContent = "Puntos por servicio";
+      legend.appendChild(h2);
+
+      Object.entries(servicioLayers).forEach(([servicio, layer]) => {
+        const color = servicioColores[servicio];
+
+        const div = document.createElement("div");
+        div.className = "legend-item";
+
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.checked = true;
+        checkbox.onchange = () => {
+          if (checkbox.checked) {
+            map.addLayer(layer);
+          } else {
+            map.removeLayer(layer);
+          }
+        };
+
+        const colorBox = document.createElement("span");
+        colorBox.className = "legend-color";
+        colorBox.style.backgroundColor = color;
+
+        const label = document.createTextNode(servicio);
+
+        div.appendChild(checkbox);
+        div.appendChild(colorBox);
+        div.appendChild(label);
+
+        legend.appendChild(div);
+      });
+    }
   </script>
 </body>
 </html>
