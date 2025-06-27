@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Visor Tenerife</title>
+  <title>Enclaves paisajísticos singulares de Tenerife</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <style>
@@ -66,22 +66,23 @@
     const map = L.map('map').setView([28.48, -16.32], 10);
     let initialBounds = null; // 🔁 Guardaremos los bounds iniciales aquí
 
-    const baseLayers = {
-      "OpenStreetMap": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        attribution: '© OpenStreetMap contributors'
-      }),
-      "Satélite (Esri)": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        maxZoom: 19,
-        attribution: 'Tiles © Esri'
-      }),
-      "Gris claro": L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-        maxZoom: 19,
-        attribution: '© CartoDB'
-      })
-    };
+const baseLayers = {
+  "OpenStreetMap": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '© OpenStreetMap contributors'
+  }),
+  "Satélite (Esri)": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    maxZoom: 19,
+    attribution: 'Tiles © Esri'
+  }),
+  "Gris claro": L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    maxZoom: 19,
+    attribution: '© CartoDB'
+  })
+};
 
-    baseLayers["OpenStreetMap"].addTo(map);
+// ✅ Activar Satélite por defecto
+baseLayers["Satélite (Esri)"].addTo(map);
     L.control.layers(baseLayers, null, { position: 'topright' }).addTo(map);
 
     const MUNICIPIOS_URL = 'https://raw.githubusercontent.com/geocyl/VisorTenerife/refs/heads/main/Municipios.geojson';
