@@ -123,7 +123,7 @@
             fillOpacity: 0
           },
           onEachFeature: (feature, layer) => {
-            const nombre = feature.properties.NOMBRE || "Sin nombre";
+            const nombre = feature.properties.NAMEUNIT || "Sin nombre";
             layer.bindTooltip(nombre, {
               permanent: true,
               direction: 'center',
