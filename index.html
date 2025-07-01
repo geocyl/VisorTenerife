@@ -103,6 +103,7 @@
 
     const MUNICIPIOS_URL = 'https://raw.githubusercontent.com/geocyl/enclavespaisajisticostenerife/refs/heads/main/Municipios.geojson';
     const PUNTOS_URL = 'https://raw.githubusercontent.com/geocyl/VisorTenerife/refs/heads/main/Puntos_Laguna_Shape2.geojson';
+    const OTROS_PUNTOS_URL = 'https://raw.githubusercontent.com/geocyl/enclavespaisajisticostenerife/refs/heads/main/PuntosTenerife.json';
 
     const servicioColores = {
       "Desarrollo Rural": "#800080",
@@ -111,31 +112,32 @@
 
     const servicioLayers = {};
     let municipiosLayer = null;
+    const otrosPuntosLayer = L.layerGroup().addTo(map);
 
-    // Cargar municipios con etiquetas visibles
+    // Cargar municipios
     fetch(MUNICIPIOS_URL)
       .then(res => res.json())
       .then(data => {
-municipiosLayer = L.geoJSON(data, {
-  style: {
-    color: '#0211ff',
-    weight: 2,
-    fillOpacity: 0
-  },
-  interactive: false, // 👈 evita que intercepte clics
-  onEachFeature: (feature, layer) => {
-    const nombre = feature.properties.NAMEUNIT || "Sin nombre";
-    layer.bindTooltip(nombre, {
-      permanent: true,
-      direction: 'center',
-      className: 'municipio-label'
-    });
-  }
-}).addTo(map);
+        municipiosLayer = L.geoJSON(data, {
+          style: {
+            color: '#0211ff',
+            weight: 2,
+            fillOpacity: 0
+          },
+          interactive: false,
+          onEachFeature: (feature, layer) => {
+            const nombre = feature.properties.NAMEUNIT || "Sin nombre";
+            layer.bindTooltip(nombre, {
+              permanent: true,
+              direction: 'center',
+              className: 'municipio-label'
+            });
+          }
+        }).addTo(map);
         buildLegend();
       });
 
-    // Cargar puntos
+    // Cargar puntos principales
     fetch(PUNTOS_URL)
       .then(res => res.json())
       .then(data => {
@@ -182,6 +184,31 @@ municipiosLayer = L.geoJSON(data, {
         buildLegend();
       });
 
+    // Cargar puntos adicionales (naranja)
+    fetch(OTROS_PUNTOS_URL)
+      .then(res => res.json())
+      .then(data => {
+        data.features.forEach(feature => {
+          const coords = feature.geometry.coordinates;
+          const props = feature.properties;
+
+          const marker = L.circleMarker([coords[1], coords[0]], {
+            radius: 6,
+            fillColor: '#FFA500', // naranja
+            color: '#fff',
+            weight: 1,
+            opacity: 1,
+            fillOpacity: 0.8
+          });
+
+          const name = props.Name || "Sin nombre";
+          marker.bindPopup(`<b>${name}</b>`);
+          marker.addTo(otrosPuntosLayer);
+        });
+
+        buildLegend();
+      });
+
     // Botón de vista inicial
     const HomeButton = L.Control.extend({
       options: { position: 'topleft' },
@@ -212,6 +239,7 @@ municipiosLayer = L.geoJSON(data, {
       const legend = document.getElementById("mapLegend");
       legend.innerHTML = "";
 
+      // Municipios
       const h1 = document.createElement("h4");
       h1.textContent = "Municipios";
       legend.appendChild(h1);
@@ -235,6 +263,7 @@ municipiosLayer = L.geoJSON(data, {
       divMuni.appendChild(labelMuni);
       legend.appendChild(divMuni);
 
+      // Puntos por servicio
       const h2 = document.createElement("h4");
       h2.textContent = "Puntos por servicio";
       legend.appendChild(h2);
@@ -267,10 +296,41 @@ municipiosLayer = L.geoJSON(data, {
         div.appendChild(label);
         legend.appendChild(div);
       });
+
+      // Otros puntos (naranja)
+      const h3 = document.createElement("h4");
+      h3.textContent = "Otros puntos";
+      legend.appendChild(h3);
+
+      const divOtros = document.createElement("div");
+      divOtros.className = "legend-item";
+
+      const chkOtros = document.createElement("input");
+      chkOtros.type = "checkbox";
+      chkOtros.checked = true;
+      chkOtros.onchange = () => {
+        if (chkOtros.checked) {
+          map.addLayer(otrosPuntosLayer);
+        } else {
+          map.removeLayer(otrosPuntosLayer);
+        }
+      };
+
+      const colorBoxOtros = document.createElement("span");
+      colorBoxOtros.className = "legend-color";
+      colorBoxOtros.style.backgroundColor = '#FFA500';
+
+      const labelOtros = document.createTextNode("Puntos adicionales");
+
+      divOtros.appendChild(chkOtros);
+      divOtros.appendChild(colorBoxOtros);
+      divOtros.appendChild(labelOtros);
+      legend.appendChild(divOtros);
     }
   </script>
 </body>
 </html>
+
 
 
 
