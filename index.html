@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <style>
     html, body, #map { margin: 0; padding: 0; height: 100%; width: 100%; }
+
     #mapTitle {
       position: absolute;
       top: 10px;
@@ -22,6 +23,7 @@
       z-index: 1200;
       text-align: center;
     }
+
     .legend {
       position: absolute;
       bottom: 20px;
@@ -34,6 +36,7 @@
       z-index: 1200;
       max-width: 220px;
     }
+
     .legend h4 {
       margin: 8px 0 4px;
       font-size: 14px;
@@ -41,18 +44,32 @@
       border-bottom: 1px solid #ccc;
       padding-bottom: 2px;
     }
+
     .legend-item {
       margin-bottom: 4px;
     }
+
     .legend-item input {
       margin-right: 6px;
     }
+
     .legend-color {
       display: inline-block;
       width: 12px;
       height: 12px;
       margin-right: 6px;
       vertical-align: middle;
+    }
+
+    /* Estilo para las etiquetas de municipios */
+    .municipio-label {
+      background: transparent;
+      border: none;
+      color: #0211ff;
+      font-weight: bold;
+      font-size: 12px;
+      text-shadow: 1px 1px 2px white;
+      pointer-events: none;
     }
   </style>
 </head>
@@ -64,28 +81,27 @@
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script>
     const map = L.map('map').setView([28.48, -16.32], 10);
-    let initialBounds = null; // 🔁 Guardaremos los bounds iniciales aquí
+    let initialBounds = null;
 
-const baseLayers = {
-  "OpenStreetMap": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19,
-    attribution: '© OpenStreetMap contributors'
-  }),
-  "Satélite (Esri)": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-    maxZoom: 19,
-    attribution: 'Tiles © Esri'
-  }),
-  "Gris claro": L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-    maxZoom: 19,
-    attribution: '© CartoDB'
-  })
-};
+    const baseLayers = {
+      "OpenStreetMap": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '© OpenStreetMap contributors'
+      }),
+      "Satélite (Esri)": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 19,
+        attribution: 'Tiles © Esri'
+      }),
+      "Gris claro": L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        maxZoom: 19,
+        attribution: '© CartoDB'
+      })
+    };
 
-// ✅ Activar Satélite por defecto
-baseLayers["Satélite (Esri)"].addTo(map);
+    baseLayers["Satélite (Esri)"].addTo(map);
     L.control.layers(baseLayers, null, { position: 'topright' }).addTo(map);
 
-    const MUNICIPIOS_URL = 'https://raw.githubusercontent.com/geocyl/VisorTenerife/refs/heads/main/Municipios.geojson';
+    const MUNICIPIOS_URL = 'https://raw.githubusercontent.com/geocyl/enclavespaisajisticostenerife/refs/heads/main/Municipios.geojson';
     const PUNTOS_URL = 'https://raw.githubusercontent.com/geocyl/VisorTenerife/refs/heads/main/Puntos_Laguna_Shape2.geojson';
 
     const servicioColores = {
@@ -96,17 +112,24 @@ baseLayers["Satélite (Esri)"].addTo(map);
     const servicioLayers = {};
     let municipiosLayer = null;
 
-    // Cargar municipios
+    // Cargar municipios con etiquetas visibles
     fetch(MUNICIPIOS_URL)
       .then(res => res.json())
       .then(data => {
         municipiosLayer = L.geoJSON(data, {
           style: {
             color: '#0211ff',
-            weight: 3,
+            weight: 2,
             fillOpacity: 0
           },
-          interactive: false
+          onEachFeature: (feature, layer) => {
+            const nombre = feature.properties.NOMBRE || "Sin nombre";
+            layer.bindTooltip(nombre, {
+              permanent: true,
+              direction: 'center',
+              className: 'municipio-label'
+            });
+          }
         }).addTo(map);
         buildLegend();
       });
@@ -151,7 +174,7 @@ baseLayers["Satélite (Esri)"].addTo(map);
         });
 
         if (bounds.length > 0) {
-          initialBounds = L.latLngBounds(bounds); // 👈 Guardamos los bounds iniciales
+          initialBounds = L.latLngBounds(bounds);
           map.fitBounds(initialBounds);
         }
 
@@ -188,7 +211,6 @@ baseLayers["Satélite (Esri)"].addTo(map);
       const legend = document.getElementById("mapLegend");
       legend.innerHTML = "";
 
-      // Grupo 1: Municipios
       const h1 = document.createElement("h4");
       h1.textContent = "Municipios";
       legend.appendChild(h1);
@@ -212,7 +234,6 @@ baseLayers["Satélite (Esri)"].addTo(map);
       divMuni.appendChild(labelMuni);
       legend.appendChild(divMuni);
 
-      // Grupo 2: Servicios
       const h2 = document.createElement("h4");
       h2.textContent = "Puntos por servicio";
       legend.appendChild(h2);
@@ -249,6 +270,7 @@ baseLayers["Satélite (Esri)"].addTo(map);
   </script>
 </body>
 </html>
+
 
 
 
