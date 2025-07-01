@@ -80,7 +80,12 @@
 
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script>
-    const map = L.map('map').setView([28.48, -16.32], 10);
+    const map = L.map('map');
+map.fitBounds([
+  [28.000, -16.926],
+  [28.600, -16.110]
+]);
+
     let initialBounds = null;
 
     const baseLayers = {
@@ -225,9 +230,10 @@
         btn.style.cursor = 'pointer';
         btn.style.boxShadow = '0 1px 5px rgba(0,0,0,0.65)';
         btn.onclick = function () {
-          if (initialBounds) {
-            map.fitBounds(initialBounds);
-          }
+          map.fitBounds([
+  [28.000, -16.926],
+  [28.600, -16.110]
+]);
         };
         return btn;
       }
